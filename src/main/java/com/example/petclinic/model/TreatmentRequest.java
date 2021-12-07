@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 @JsonDeserialize
 @JsonSerialize
-public class AddTreatmentRequest {
+public class TreatmentRequest {
 
     private String description;
     private BigDecimal cost;

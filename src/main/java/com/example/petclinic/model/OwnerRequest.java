@@ -1,6 +1,6 @@
 package com.example.petclinic.model;
 
-public class AddOwnerRequest {
+public class OwnerRequest {
     private String name;
     private String address;
     private String phone;

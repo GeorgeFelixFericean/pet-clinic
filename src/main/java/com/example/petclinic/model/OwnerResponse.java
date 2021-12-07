@@ -1,11 +1,8 @@
 package com.example.petclinic.model;
 
-import com.example.petclinic.persistence.entities.PetEntity;
+import org.springframework.hateoas.RepresentationModel;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class OwnerResponse {
+public class OwnerResponse extends RepresentationModel {
 
     private Long id;
     private String name;

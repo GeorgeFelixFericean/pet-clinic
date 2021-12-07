@@ -10,10 +10,12 @@ public enum ErrorReturnCode {
     DESCRIPTION_MISSING("40006", "Description missing"),
     COST_MISSING("40007", "Cost missing"),
     DATE_MISSING("40008", "Date missing"),
+    OWNER_MISSING("40009", "Owner missing"),
 
     NOT_FOUND("40400", "Not found"),
     OWNER_NOT_FOUND("40401", "Owner not found"),
-    PET_NOT_FOUND("40402", "Pet not found");
+    PET_NOT_FOUND("40402", "Pet not found"),
+    TREATMENT_NOT_FOUND("40403", "Treatment not found");
 
 
 

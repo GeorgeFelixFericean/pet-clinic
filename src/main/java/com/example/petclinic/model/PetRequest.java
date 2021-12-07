@@ -1,10 +1,13 @@
 package com.example.petclinic.model;
 
-public class AddPetRequest {
+import com.example.petclinic.persistence.entities.OwnerEntity;
+
+public class PetRequest {
 
     private String name;
     private String type;
     private byte[] photo;
+
 
     public String getName() {
         return name.trim().toUpperCase();
@@ -29,4 +32,5 @@ public class AddPetRequest {
     public void setPhoto(byte[] photo) {
         this.photo = photo;
     }
+
 }
