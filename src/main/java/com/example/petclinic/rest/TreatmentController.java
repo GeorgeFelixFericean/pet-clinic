@@ -54,7 +54,7 @@ public class TreatmentController {
             @DateTimeFormat(pattern = "yyyy-MM-dd")
                     LocalDate until) {
 
-        return ResponseEntity.ok(treatmentService.getTreatments(description, from, until));
+        return ResponseEntity.ok(treatmentService.getTreatmentsAdmin(description, from, until));
     }
 
     //GET TREATMENTS - USER
@@ -77,8 +77,8 @@ public class TreatmentController {
             @DateTimeFormat(pattern = "yyyy-MM-dd")
                     LocalDate until) {
 
-        return optionalPetId.map(petId -> ResponseEntity.ok(treatmentService.getTreatments(ownerId, petId, description, from, until)))
-                .orElseGet(() -> ResponseEntity.ok(treatmentService.getTreatments(ownerId, null, description, from, until)));
+        return optionalPetId.map(petId -> ResponseEntity.ok(treatmentService.getTreatmentsUser(ownerId, petId, description, from, until)))
+                .orElseGet(() -> ResponseEntity.ok(treatmentService.getTreatmentsUser(ownerId, null, description, from, until)));
     }
 
 
