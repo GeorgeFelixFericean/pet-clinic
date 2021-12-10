@@ -1,6 +1,5 @@
 package com.example.petclinic.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.hateoas.RepresentationModel;
 
 public class PetResponse extends RepresentationModel {
@@ -8,8 +7,6 @@ public class PetResponse extends RepresentationModel {
     private Long id;
     private String name;
     private String type;
-    private byte[] photo;
-    private Long ownerId;
 
 
     public Long getId() {
@@ -34,23 +31,6 @@ public class PetResponse extends RepresentationModel {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public byte[] getPhoto() {
-        return photo;
-    }
-
-    public void setPhoto(byte[] photo) {
-        this.photo = photo;
-    }
-
-    @JsonIgnore
-    public Long getOwnerId() {
-        return ownerId;
-    }
-
-    public void setOwnerId(Long ownerId) {
-        this.ownerId = ownerId;
     }
 
 }

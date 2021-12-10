@@ -16,7 +16,4 @@ public interface OwnerMapper {
 
     List<OwnerResponse> ownerEntitiesToOwnerResponses(List<OwnerEntity> ownerEntities);
 
-    OwnerEntity ownerResponseToOwnerEntity(OwnerResponse ownerResponse);
-
-    OwnerRequest ownerResponseToAddOwnerRequest(OwnerResponse ownerResponse);
 }

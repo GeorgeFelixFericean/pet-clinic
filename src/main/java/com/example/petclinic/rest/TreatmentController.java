@@ -1,16 +1,18 @@
 package com.example.petclinic.rest;
 
-import com.example.petclinic.model.PetResponse;
+import com.example.petclinic.model.ReportResponse;
 import com.example.petclinic.model.TreatmentRequest;
 import com.example.petclinic.model.TreatmentResponse;
 import com.example.petclinic.service.TreatmentService;
 import io.swagger.annotations.ApiParam;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class TreatmentController {
@@ -32,20 +34,53 @@ public class TreatmentController {
             @Valid
             @RequestBody TreatmentRequest request
             ,
-            @ApiParam(value = "The pet id", required = true) @PathVariable("petId") Long petId) {
+            @ApiParam(value = "The pet id", required = true)
+            @PathVariable("petId") Long petId) {
 
         return ResponseEntity.ok(treatmentService.addTreatment(request, petId));
     }
 
-    //GET TREATMENTS
+    //GET TREATMENTS - ADMIN
     @RequestMapping(
             value = "/admin/treatments",
             produces = {"application/json;charset=utf-8"},
             method = RequestMethod.GET)
-    public ResponseEntity<List<TreatmentResponse>> getTreatments(String description, LocalDate from, LocalDate until) {
+    public ResponseEntity<List<TreatmentResponse>> getTreatmentsAdmin(
+            String description
+            ,
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+                    LocalDate from
+            ,
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+                    LocalDate until) {
 
         return ResponseEntity.ok(treatmentService.getTreatments(description, from, until));
     }
+
+    //GET TREATMENTS - USER
+    @RequestMapping(
+            value = {"/user/owners/{ownerId}/pets/{petId}/treatments", "/user/owners/{ownerId}/pets/treatments"},
+            produces = {"application/json;charset=utf-8"},
+            method = RequestMethod.GET)
+    public ResponseEntity<ReportResponse> getTreatmentsUser(
+            @ApiParam(value = "The owner id", required = true)
+            @PathVariable("ownerId") Long ownerId
+            ,
+            @ApiParam(value = "The pet id")
+            @PathVariable("petId") Optional<Long> optionalPetId
+            ,
+            String description
+            ,
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+                    LocalDate from
+            ,
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+                    LocalDate until) {
+
+        return optionalPetId.map(petId -> ResponseEntity.ok(treatmentService.getTreatments(ownerId, petId, description, from, until)))
+                .orElseGet(() -> ResponseEntity.ok(treatmentService.getTreatments(ownerId, null, description, from, until)));
+    }
+
 
     //UPDATE TREATMENT
     @RequestMapping(

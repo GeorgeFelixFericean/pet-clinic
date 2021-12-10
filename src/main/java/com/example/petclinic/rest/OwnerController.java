@@ -61,16 +61,25 @@ public class OwnerController {
     @RequestMapping(
             value = "/admin/owners/{ownerId}",
             produces = {"application/json;charset=utf-8"},
-            consumes = {"application/json;charset=utf-8"},
             method = RequestMethod.PUT)
     public ResponseEntity<OwnerResponse> updateOwner(
-            @ApiParam(value = "JSON payload", required = true)
+            @ApiParam(value = "The new owner name", required = true)
             @Valid
-            @RequestBody OwnerRequest request
+            @RequestParam(value = "name") String name
             ,
-            @ApiParam(value = "The owner id", required = true) @PathVariable("ownerId") Long ownerId) {
 
-        return ResponseEntity.ok(ownerService.updateOwner(request, ownerId));
+            @ApiParam(value = "The new owner address", required = true)
+            @Valid
+            @RequestParam(value = "address") String address
+            ,
+            @ApiParam(value = "The owner phone", required = true)
+            @Valid
+            @RequestParam(value = "phone") String phone
+            ,
+            @ApiParam(value = "The owner id", required = true)
+            @PathVariable("ownerId") Long ownerId) {
+
+        return ResponseEntity.ok(ownerService.updateOwner(name, address, phone, ownerId));
     }
 
     //DELETE OWNER

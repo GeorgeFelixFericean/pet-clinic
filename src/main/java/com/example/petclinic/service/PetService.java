@@ -1,27 +1,31 @@
 package com.example.petclinic.service;
 
 import com.example.petclinic.exception.PetClinicException;
-import com.example.petclinic.mapping.OwnerMapper;
 import com.example.petclinic.mapping.PetMapper;
-import com.example.petclinic.model.OwnerRequest;
-import com.example.petclinic.model.OwnerResponse;
-import com.example.petclinic.model.PetRequest;
 import com.example.petclinic.model.PetResponse;
 import com.example.petclinic.persistence.entities.OwnerEntity;
 import com.example.petclinic.persistence.entities.PetEntity;
+import com.example.petclinic.persistence.entities.TreatmentEntity;
 import com.example.petclinic.persistence.repository.OwnerRepository;
 import com.example.petclinic.persistence.repository.PetRepository;
-import com.example.petclinic.rest.OwnerController;
+import com.example.petclinic.rest.PetController;
 import com.example.petclinic.rest.util.ErrorReturnCode;
 import org.mapstruct.factory.Mappers;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -30,7 +34,6 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 public class PetService {
 
     PetMapper petMapper = Mappers.getMapper(PetMapper.class);
-    OwnerMapper ownerMapper = Mappers.getMapper(OwnerMapper.class);
     private final PetRepository petRepository;
     private final OwnerRepository ownerRepository;
     private final OwnerService ownerService;
@@ -42,29 +45,40 @@ public class PetService {
     }
 
     //ADD PET
-    public PetResponse addPet(PetRequest request, Long ownerId) {
+    public PetResponse addPet(String name, String type, MultipartFile photo, Long ownerId) throws IOException {
 
-        validateRequest(request);
+        validateRequest(name, type);
 
         OwnerEntity ownerEntity = ownerService.validateOwner(ownerId);
 
-        PetEntity petEntity = petMapper.petRequestToPetEntity(request);
+        PetEntity petEntity = new PetEntity();
         petEntity.setOwner(ownerEntity);
+        petEntity.setName(name.trim().toUpperCase());
+        petEntity.setType(type.trim().toUpperCase());
+        petEntity.setPhoto(photo.getBytes());
         petRepository.save(petEntity);
 
-        return petMapper.petEntityToPetResponse(petEntity);
+        PetResponse petResponse = petMapper.petEntityToPetResponse(petEntity);
+        petResponse.add(linkTo(methodOn(PetController.class).getPhoto(petResponse.getId())).withRel("Photo"));
+
+        return petResponse;
     }
 
     //GET PETS
-    public List<PetResponse> getPets(String name, String type) {
+    public List<PetResponse> getPets(String name, String type, String phone, LocalDate from, LocalDate until) {
 
-        List<PetResponse> responseList = petMapper.petResponseListFromPetEntityList(findByCriteria(name.trim(), type.trim()));
+        List<PetResponse> responseList = petMapper
+                .petResponseListFromPetEntityList(findByCriteria(name.trim(), type.trim(), phone.trim(), from, until));
 
-        responseList.forEach(petResponse -> petResponse.add(linkTo(methodOn(OwnerController.class)
-                .getOwnerById(petResponse.getOwnerId()))
-                .withRel("Owner")));
+        responseList.forEach(petResponse -> petResponse.add(linkTo(methodOn(PetController.class)
+                .getPhoto(petResponse.getId()))
+                .withRel("Photo")));
 
-        return responseList;
+        List<PetResponse> responseListWithoutDuplicates = responseList.stream()
+                .distinct()
+                .collect(Collectors.toList());
+
+        return responseListWithoutDuplicates;
     }
 
     //GET PETS BY OWNER ID
@@ -72,24 +86,44 @@ public class PetService {
 
         OwnerEntity ownerEntity = ownerService.validateOwner(ownerId);
 
-        return petMapper.petResponseListFromPetEntityList(petRepository.findPetEntitiesByOwner(ownerEntity));
+        List<PetResponse> responseList = petMapper
+                .petResponseListFromPetEntityList(petRepository.findPetEntitiesByOwner(ownerEntity));
+
+        responseList.forEach(petResponse -> petResponse.add(linkTo(methodOn(PetController.class)
+                .getPhoto(petResponse.getId()))
+                .withRel("Photo")));
+
+        return responseList;
     }
 
     //GET PET BY ID
     public PetResponse getPetById(Long petId) {
         PetEntity petEntity = validatePet(petId);
 
-        return petMapper.petEntityToPetResponse(petEntity);
+        PetResponse petResponse = petMapper.petEntityToPetResponse(petEntity);
+        petResponse.add(linkTo(methodOn(PetController.class).getPhoto(petResponse.getId())).withRel("Photo"));
+
+        return petResponse;
+    }
+
+    //GET PHOTO
+    public byte[] getPhoto(Long petId) {
+        PetEntity petEntity = validatePet(petId);
+
+        return petEntity.getPhoto();
     }
 
     //UPDATE PET
-    public PetResponse updatePet(String name, Long petId) {
+    public PetResponse updatePet(String name, MultipartFile photo, Long petId) throws IOException {
 
         PetEntity petEntity = validatePet(petId);
 
-        updatePet(name, petEntity);
+        updatePet(name, photo, petEntity);
 
-        return petMapper.petEntityToPetResponse(petEntity);
+        PetResponse petResponse = petMapper.petEntityToPetResponse(petEntity);
+        petResponse.add(linkTo(methodOn(PetController.class).getPhoto(petResponse.getId())).withRel("Photo"));
+
+        return petResponse;
     }
 
     //DELETE PET
@@ -98,14 +132,20 @@ public class PetService {
         PetEntity petEntity = validatePet(petId);
 
         PetResponse response = petMapper.petEntityToPetResponse(petEntity);
+
         petRepository.delete(petEntity);
+
         return response;
     }
 
     //HELPER METHODS
-    private void updatePet(String name, PetEntity petEntity) {
+    private void updatePet(String name, MultipartFile photo, PetEntity petEntity) throws IOException {
         if (!name.isBlank()) {
             petEntity.setName(name.trim().toUpperCase());
+        }
+
+        if (photo.getBytes().length > 0) {
+            petEntity.setPhoto(photo.getBytes());
         }
 
         petRepository.save(petEntity);
@@ -121,7 +161,7 @@ public class PetService {
         }
     }
 
-    private List<PetEntity> findByCriteria(String name, String type) {
+    private List<PetEntity> findByCriteria(String name, String type, String phone, LocalDate from, LocalDate until) {
         return petRepository.findAll((Specification<PetEntity>) (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (name != null) {
@@ -130,17 +170,25 @@ public class PetService {
             if (type != null) {
                 predicates.add(criteriaBuilder.and(criteriaBuilder.like(root.get("type"), "%" + type + "%")));
             }
+            Join<PetEntity, OwnerEntity> ownerEntityJoin = root.join("owner");
+            if (phone != null) {
+                predicates.add(criteriaBuilder.and(criteriaBuilder.like(ownerEntityJoin.get("phone"), "%" + phone + "%")));
+            }
+            Join<PetEntity, TreatmentEntity> treatmentEntityJoin = root.join("treatments");
+            if (from != null && until != null) {
+                predicates.add(criteriaBuilder.between(treatmentEntityJoin.get("treatmentDate"), from, until));
+            }
 
-            return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         });
     }
 
-    private void validateRequest(PetRequest request) {
-        if (request.getName().isBlank()) {
+    private void validateRequest(String name, String type) {
+        if (name.isBlank()) {
             throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.NAME_MISSING);
         }
 
-        if (request.getType().isBlank()) {
+        if (type.isBlank()) {
             throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.PET_TYPE_MISSING);
         }
     }

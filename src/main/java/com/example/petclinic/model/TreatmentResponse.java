@@ -1,18 +1,14 @@
 package com.example.petclinic.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.springframework.hateoas.RepresentationModel;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class TreatmentResponse extends RepresentationModel {
+public class TreatmentResponse {
 
     private Long id;
     private String description;
     private BigDecimal cost;
     private LocalDate treatmentDate;
-    private Long petId;
 
 
     public Long getId() {
@@ -47,12 +43,4 @@ public class TreatmentResponse extends RepresentationModel {
         this.treatmentDate = treatmentDate;
     }
 
-    @JsonIgnore
-    public Long getPetId() {
-        return petId;
-    }
-
-    public void setPetId(Long petId) {
-        this.petId = petId;
-    }
 }

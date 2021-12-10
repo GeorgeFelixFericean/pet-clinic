@@ -7,9 +7,12 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PetRepository extends JpaRepository<PetEntity, Long>, JpaSpecificationExecutor<PetEntity> {
 
     List<PetEntity> findPetEntitiesByOwner(OwnerEntity ownerEntity);
+
+    Optional<PetEntity> findPetEntityByOwnerAndId(OwnerEntity ownerEntity, Long petId);
 }

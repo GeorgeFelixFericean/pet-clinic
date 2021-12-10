@@ -6,7 +6,6 @@ import com.example.petclinic.model.OwnerRequest;
 import com.example.petclinic.model.OwnerResponse;
 import com.example.petclinic.persistence.entities.OwnerEntity;
 import com.example.petclinic.persistence.repository.OwnerRepository;
-import com.example.petclinic.rest.PetController;
 import com.example.petclinic.rest.util.ErrorReturnCode;
 import org.mapstruct.factory.Mappers;
 import org.springframework.data.jpa.domain.Specification;
@@ -17,9 +16,6 @@ import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Service
 public class OwnerService {
@@ -44,9 +40,9 @@ public class OwnerService {
     public List<OwnerResponse> getOwners(String name, String address, String phone) {
 
         List<OwnerResponse> responseList = ownerMapper.ownerEntitiesToOwnerResponses(findByCriteria(name.trim(), address.trim(), phone.trim()));
-        responseList.forEach(ownerResponse -> ownerResponse.add(linkTo(methodOn(PetController.class)
-                .getPetsByOwnerId(ownerMapper.ownerResponseToOwnerEntity(ownerResponse).getId()))
-                .withRel("Pets")));
+//        responseList.forEach(ownerResponse -> ownerResponse.add(linkTo(methodOn(PetController.class)
+//                .getPetsByOwnerId(ownerMapper.ownerResponseToOwnerEntity(ownerResponse).getId()))
+//                .withRel("Pets")));
 
         return responseList;
     }
@@ -59,11 +55,11 @@ public class OwnerService {
     }
 
     //UPDATE OWNER
-    public OwnerResponse updateOwner(OwnerRequest request, Long ownerId) {
+    public OwnerResponse updateOwner(String name, String address, String phone, Long ownerId) {
 
         OwnerEntity ownerEntity = validateOwner(ownerId);
 
-        updateOwner(request, ownerEntity);
+        updateOwner(name, address, phone, ownerEntity);
 
         return ownerMapper.ownerEntityToOwnerResponse(ownerEntity);
     }
@@ -89,16 +85,16 @@ public class OwnerService {
         }
     }
 
-    private void updateOwner(OwnerRequest request, OwnerEntity ownerEntity) {
-        if (!request.getName().isBlank()) {
-            ownerEntity.setName(request.getName());
+    private void updateOwner(String name, String address, String phone, OwnerEntity ownerEntity) {
+        if (!name.isBlank()) {
+            ownerEntity.setName(name.trim().toUpperCase());
         }
-        if (!request.getAddress().isBlank()) {
-            ownerEntity.setAddress(request.getAddress());
+        if (!address.isBlank()) {
+            ownerEntity.setAddress(address.trim().toUpperCase());
         }
-        if (!request.getPhone().isBlank()) {
-            if (request.getPhone().length() == 10 && isValidPhoneNumber(request.getPhone())) {
-                ownerEntity.setPhone(request.getPhone());
+        if (!phone.isBlank()) {
+            if (phone.length() == 10 && isValidPhoneNumber(phone)) {
+                ownerEntity.setPhone(phone);
             } else {
                 throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.INVALID_PHONE_NUMBER);
             }

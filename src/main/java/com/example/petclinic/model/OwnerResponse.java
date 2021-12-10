@@ -1,8 +1,6 @@
 package com.example.petclinic.model;
 
-import org.springframework.hateoas.RepresentationModel;
-
-public class OwnerResponse extends RepresentationModel {
+public class OwnerResponse {
 
     private Long id;
     private String name;

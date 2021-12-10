@@ -80,5 +80,4 @@ public class PetEntity {
         this.treatments = treatments;
     }
 
-
 }
