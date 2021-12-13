@@ -6,16 +6,12 @@ import com.example.petclinic.model.PetResponse;
 import com.example.petclinic.persistence.entities.OwnerEntity;
 import com.example.petclinic.persistence.entities.PetEntity;
 import com.example.petclinic.persistence.entities.TreatmentEntity;
-import com.example.petclinic.persistence.repository.OwnerRepository;
 import com.example.petclinic.persistence.repository.PetRepository;
 import com.example.petclinic.rest.PetController;
 import com.example.petclinic.rest.util.ErrorReturnCode;
 import org.mapstruct.factory.Mappers;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,7 +20,9 @@ import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -35,12 +33,10 @@ public class PetService {
 
     PetMapper petMapper = Mappers.getMapper(PetMapper.class);
     private final PetRepository petRepository;
-    private final OwnerRepository ownerRepository;
     private final OwnerService ownerService;
 
-    public PetService(PetRepository petRepository, OwnerRepository ownerRepository, OwnerService ownerService) {
+    public PetService(PetRepository petRepository, OwnerService ownerService) {
         this.petRepository = petRepository;
-        this.ownerRepository = ownerRepository;
         this.ownerService = ownerService;
     }
 
@@ -65,20 +61,18 @@ public class PetService {
     }
 
     //GET PETS
-    public List<PetResponse> getPets(String name, String type, String phone, LocalDate from, LocalDate until) {
+    public List<PetResponse> getPets(String name, String phone, LocalDate from, LocalDate until) {
 
         List<PetResponse> responseList = petMapper
-                .petResponseListFromPetEntityList(findByCriteria(name.trim(), type.trim(), phone.trim(), from, until));
+                .petResponseListFromPetEntityList(findByCriteria(name.trim(), phone.trim(), from, until));
 
         responseList.forEach(petResponse -> petResponse.add(linkTo(methodOn(PetController.class)
                 .getPhoto(petResponse.getId()))
                 .withRel("Photo")));
 
-        List<PetResponse> responseListWithoutDuplicates = responseList.stream()
+        return responseList.stream()
                 .distinct()
                 .collect(Collectors.toList());
-
-        return responseListWithoutDuplicates;
     }
 
     //GET PETS BY OWNER ID
@@ -161,20 +155,17 @@ public class PetService {
         }
     }
 
-    private List<PetEntity> findByCriteria(String name, String type, String phone, LocalDate from, LocalDate until) {
+    private List<PetEntity> findByCriteria(String name, String phone, LocalDate from, LocalDate until) {
         return petRepository.findAll((Specification<PetEntity>) (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            if (name != null) {
+            if (name != null && !name.isBlank()) {
                 predicates.add(criteriaBuilder.and(criteriaBuilder.like(root.get("name"), "%" + name + "%")));
             }
-            if (type != null) {
-                predicates.add(criteriaBuilder.and(criteriaBuilder.like(root.get("type"), "%" + type + "%")));
-            }
             Join<PetEntity, OwnerEntity> ownerEntityJoin = root.join("owner");
-            if (phone != null) {
-                predicates.add(criteriaBuilder.and(criteriaBuilder.like(ownerEntityJoin.get("phone"), "%" + phone + "%")));
+            if (phone != null && !phone.isBlank()) {
+                predicates.add(criteriaBuilder.and(criteriaBuilder.equal(ownerEntityJoin.get("phone"), phone)));
             }
-            Join<PetEntity, TreatmentEntity> treatmentEntityJoin = root.join("treatments");
+            Join<PetEntity, TreatmentEntity> treatmentEntityJoin = root.join("treatments", JoinType.LEFT);
             if (from != null && until != null) {
                 predicates.add(criteriaBuilder.between(treatmentEntityJoin.get("treatmentDate"), from, until));
             }
@@ -182,6 +173,7 @@ public class PetService {
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         });
     }
+
 
     private void validateRequest(String name, String type) {
         if (name.isBlank()) {

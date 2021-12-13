@@ -14,5 +14,6 @@ public interface PetRepository extends JpaRepository<PetEntity, Long>, JpaSpecif
 
     List<PetEntity> findPetEntitiesByOwner(OwnerEntity ownerEntity);
 
-    Optional<PetEntity> findPetEntityByOwnerAndId(OwnerEntity ownerEntity, Long petId);
+    Optional<List<PetEntity>> findPetEntitiesByTreatmentsIsNull();
+
 }

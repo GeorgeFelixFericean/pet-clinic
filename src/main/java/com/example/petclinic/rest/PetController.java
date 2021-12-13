@@ -58,14 +58,13 @@ public class PetController {
             method = RequestMethod.GET)
     public ResponseEntity<List<PetResponse>> getPets(
             String name,
-            String type,
             String phone,
             @DateTimeFormat(pattern = "yyyy-MM-dd")
                     LocalDate from,
             @DateTimeFormat(pattern = "yyyy-MM-dd")
                     LocalDate until) {
 
-        return ResponseEntity.ok(petService.getPets(name, type, phone, from, until));
+        return ResponseEntity.ok(petService.getPets(name, phone, from, until));
     }
 
     //GET PETS BY OWNER ID
