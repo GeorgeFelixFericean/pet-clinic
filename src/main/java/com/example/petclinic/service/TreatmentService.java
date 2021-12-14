@@ -56,7 +56,7 @@ public class TreatmentService {
     //GET TREATMENTS - ADMIN
     public List<TreatmentResponse> getTreatmentsAdmin(String description, LocalDate from, LocalDate until) {
 
-        return treatmentMapper.treatmentEntityListToTreatmentResponseList(findByCriteriaAdmin(null, null, description.trim(), from, until));
+        return treatmentMapper.treatmentEntityListToTreatmentResponseList(findByCriteria(null, null, description.trim(), from, until));
     }
 
     //GET TREATMENTS - USER
@@ -65,8 +65,7 @@ public class TreatmentService {
         //todo - validation owner + pet - id
 
         List<TreatmentResponse> treatmentResponseList = treatmentMapper
-                .treatmentEntityListToTreatmentResponseList(findByCriteriaAdmin(ownerId, petId, description.trim(), from, until));
-
+                .treatmentEntityListToTreatmentResponseList(findByCriteria(ownerId, petId, description.trim(), from, until));
 
         ReportResponse reportResponse = new ReportResponse();
         reportResponse.setTreatmentResponseList(treatmentResponseList);
@@ -119,7 +118,7 @@ public class TreatmentService {
         return result;
     }
 
-    private List<TreatmentEntity> findByCriteriaAdmin(Long ownerId, Long petId, String description, LocalDate from, LocalDate until) {
+    private List<TreatmentEntity> findByCriteria(Long ownerId, Long petId, String description, LocalDate from, LocalDate until) {
         return treatmentRepository.findAll((Specification<TreatmentEntity>) (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -137,7 +136,7 @@ public class TreatmentService {
             }
 
             Join<PetEntity, OwnerEntity> ownerEntityJoin = petEntityJoin.join("owner");
-            if (petId != null) {
+            if (ownerId != null) {
                 predicates.add(criteriaBuilder.and(criteriaBuilder.equal(ownerEntityJoin.get("id"), ownerId)));
             }
 

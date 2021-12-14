@@ -11,12 +11,16 @@ public enum ErrorReturnCode {
     COST_MISSING("40007", "Cost missing"),
     DATE_MISSING("40008", "Date missing"),
     OWNER_MISSING("40009", "Owner missing"),
+    USERNAME_MISSING("40010", "Username missing"),
+    PASSWORD_MISSING("40011", "Password missing"),
+    ROLE_MISSING("40012", "Role missing"),
 
     NOT_FOUND("40400", "Not found"),
     OWNER_NOT_FOUND("40401", "Owner not found"),
     PET_NOT_FOUND("40402", "Pet not found"),
-    TREATMENT_NOT_FOUND("40403", "Treatment not found");
+    TREATMENT_NOT_FOUND("40403", "Treatment not found"),
 
+    USERNAME_ALREADY_EXISTS("40901", "A user with this username already exists");
 
 
     private final String code;

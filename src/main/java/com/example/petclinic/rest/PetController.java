@@ -2,7 +2,6 @@ package com.example.petclinic.rest;
 
 import com.example.petclinic.model.PetResponse;
 import com.example.petclinic.service.PetService;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiParam;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -16,7 +15,6 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 
 @RestController
 public class PetController {

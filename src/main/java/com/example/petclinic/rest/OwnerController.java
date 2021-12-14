@@ -3,7 +3,6 @@ package com.example.petclinic.rest;
 import com.example.petclinic.model.OwnerRequest;
 import com.example.petclinic.model.OwnerResponse;
 import com.example.petclinic.service.OwnerService;
-import com.example.petclinic.service.PetService;
 import io.swagger.annotations.ApiParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,11 +14,9 @@ import java.util.List;
 public class OwnerController {
 
     private final OwnerService ownerService;
-    private final PetService petService;
 
-    public OwnerController(OwnerService ownerService, PetService petService) {
+    public OwnerController(OwnerService ownerService) {
         this.ownerService = ownerService;
-        this.petService = petService;
     }
 
     //ADD OWNER

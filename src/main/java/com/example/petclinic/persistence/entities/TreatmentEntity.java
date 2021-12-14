@@ -1,9 +1,5 @@
 package com.example.petclinic.persistence.entities;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;

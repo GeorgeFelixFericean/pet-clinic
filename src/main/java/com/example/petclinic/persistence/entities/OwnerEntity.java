@@ -13,6 +13,9 @@ public class OwnerEntity {
     private String address;
     private String phone;
     private List<PetEntity> pets = new ArrayList<>();
+    private String username;
+    private String password;
+    private String role;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,5 +70,35 @@ public class OwnerEntity {
 
     public void setPets(List<PetEntity> pets) {
         this.pets = pets;
+    }
+
+    @Basic
+    @Column(name = "username", nullable = false)
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    @Basic
+    @Column(name = "password", nullable = false)
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    @Basic
+    @Column(name = "role", nullable = false)
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

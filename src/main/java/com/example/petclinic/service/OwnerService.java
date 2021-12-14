@@ -40,9 +40,6 @@ public class OwnerService {
     public List<OwnerResponse> getOwners(String name, String address, String phone) {
 
         List<OwnerResponse> responseList = ownerMapper.ownerEntitiesToOwnerResponses(findByCriteria(name.trim(), address.trim(), phone.trim()));
-//        responseList.forEach(ownerResponse -> ownerResponse.add(linkTo(methodOn(PetController.class)
-//                .getPetsByOwnerId(ownerMapper.ownerResponseToOwnerEntity(ownerResponse).getId()))
-//                .withRel("Pets")));
 
         return responseList;
     }
@@ -54,7 +51,7 @@ public class OwnerService {
         return ownerMapper.ownerEntityToOwnerResponse(ownerEntity);
     }
 
-    //UPDATE OWNER
+    //UPDATE OWNER (ADMIN)
     public OwnerResponse updateOwner(String name, String address, String phone, Long ownerId) {
 
         OwnerEntity ownerEntity = validateOwner(ownerId);
@@ -63,6 +60,11 @@ public class OwnerService {
 
         return ownerMapper.ownerEntityToOwnerResponse(ownerEntity);
     }
+
+    //UPDATE OWNER - USERNAME AND PASSWORD (USER)
+//    public OwnerResponse updateOwner(String username, String password) {
+//
+//    }
 
     //DELETE OWNER
     public OwnerResponse deleteOwner(Long ownerId) {
@@ -102,7 +104,6 @@ public class OwnerService {
         ownerRepository.save(ownerEntity);
     }
 
-
     private List<OwnerEntity> findByCriteria(String name, String address, String phone) {
         return ownerRepository.findAll((Specification<OwnerEntity>) (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -115,7 +116,7 @@ public class OwnerService {
             if (phone != null) {
                 predicates.add(criteriaBuilder.and(criteriaBuilder.like(root.get("phone"), "%" + phone + "%")));
             }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         });
     }
 
@@ -137,6 +138,22 @@ public class OwnerService {
                 "\\s+", "").length() != 10 ||
                 !isValidPhoneNumber(request.getPhone().replaceAll("\\s+", ""))) {
             throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.INVALID_PHONE_NUMBER);
+        }
+
+        if (request.getUsername().isBlank()) {
+            throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.USERNAME_MISSING);
+        }
+
+        if (request.getPassword().isBlank()) {
+            throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.PASSWORD_MISSING);
+        }
+
+        if (ownerRepository.findOwnerEntityByUsername(request.getUsername()).isPresent()) {
+            throw new PetClinicException(HttpStatus.CONFLICT, ErrorReturnCode.USERNAME_ALREADY_EXISTS);
+        }
+
+        if (request.getRole().isBlank()) {
+            throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.ROLE_MISSING);
         }
     }
 
