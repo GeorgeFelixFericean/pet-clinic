@@ -12,7 +12,7 @@ As a pet clinic employee I would like to be able to search for a pet/pets by it�
 telephone number, treatment interval.
 
 As a pet clinic employee I would like to update the information of a pet /owner (change of
-address, change of telephone, change of picture, change of name)
+address, change of telephone, change of picture, change of name).
 
 As a pet clinic employee I would like to delete a pet from our registry. I want all the log of
 it’s treatments to be deleted but I do not want the owner’s info to be deleted with it.
@@ -22,7 +22,7 @@ of my pets or all of my pets in a given time frame.
 
 I do not want to have two users with the same username.
 
-I do not want to be able to change my username to a username that already exists
+I do not want to be able to change my username to a username that already exists.
 
 When I retrieve owners I do not want to get all the pets and all their treatments as well - I just
 want a list of owners.
@@ -33,4 +33,4 @@ of all the pets that were treated in our clinic between 1st of march and 10th of
 I want to be able to use multiple filters for pets.
 
 We need to encrypt all the passwords and save them encrypted in the db.
-If two users have the same password I do not want the same encrypted text to be saved in the db
+If two users have the same password I do not want the same encrypted text to be saved in the db.
