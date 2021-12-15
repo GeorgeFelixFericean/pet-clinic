@@ -34,3 +34,24 @@ I want to be able to use multiple filters for pets.
 
 We need to encrypt all the passwords and save them encrypted in the db.
 If two users have the same password I do not want the same encrypted text to be saved in the db.
+
+Our marketing department decided to make a campaign every month to reward our customers
+and encourage them to come to our clinic more for check-ups. Also it will increase the traffic to
+our website which they think will help us for better SEO ranking. The pets that came for a visit to
+our clinic in that month get enrolled in that month’s contest and they can win prizes like promo
+codes for pet food or reductions to general treatments of check-ups.. This month’s contest is
+called “Who’s a good boy” . All male dogs that come to our clinic this month will automatically
+be enrolled in the campaign.
+
+I want a public page accessible at /whosagoodboy where I can a galery of all the dogs that are
+participating to this month’s contest - I want to see for each dog the picture, the name and the id
+of that dog.
+
+As an owner I want to be able to vote for a dog. I am only allowed to vote once per day.
+At the end of the contest the owner of the dog with most votes will win a prize.
+
+Implementation of the gallery, the voting system, the checks for voting once a day are
+mandatory and only owners are allowed to vote.
+
+Implementation of the page /winner where we will see the winner of the contest and the number
+of votes he received.
