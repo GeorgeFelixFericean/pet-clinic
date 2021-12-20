@@ -8,6 +8,7 @@ import com.example.petclinic.model.TreatmentResponse;
 import com.example.petclinic.persistence.entities.OwnerEntity;
 import com.example.petclinic.persistence.entities.PetEntity;
 import com.example.petclinic.persistence.entities.TreatmentEntity;
+import com.example.petclinic.persistence.repository.PetRepository;
 import com.example.petclinic.persistence.repository.TreatmentRepository;
 import com.example.petclinic.rest.util.ErrorReturnCode;
 import org.mapstruct.factory.Mappers;
@@ -15,9 +16,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,14 +31,18 @@ public class TreatmentService {
     TreatmentMapper treatmentMapper = Mappers.getMapper(TreatmentMapper.class);
     private final TreatmentRepository treatmentRepository;
     private final PetService petService;
+    private final OwnerService ownerService;
+    private final PetRepository petRepository;
 
 
     public TreatmentService(TreatmentRepository treatmentRepository,
-                            PetService petService) {
+                            PetService petService,
+                            OwnerService ownerService, PetRepository petRepository) {
 
         this.treatmentRepository = treatmentRepository;
         this.petService = petService;
-
+        this.ownerService = ownerService;
+        this.petRepository = petRepository;
     }
 
     //ADD TREATMENT
@@ -56,22 +62,24 @@ public class TreatmentService {
     //GET TREATMENTS - ADMIN
     public List<TreatmentResponse> getTreatmentsAdmin(String description, LocalDate from, LocalDate until) {
 
-        return treatmentMapper.treatmentEntityListToTreatmentResponseList(findByCriteria(null, null, description.trim(), from, until));
+        return treatmentMapper.treatmentEntityListToTreatmentResponseList(findByCriteria(description.trim(), from, until));
     }
 
     //GET TREATMENTS - USER
-    public ReportResponse getTreatmentsUser(Long ownerId, Long petId, String description, LocalDate from, LocalDate until) {
+    public ReportResponse getTreatmentsUser(Long ownerId, Long petId, LocalDate from, LocalDate until, HttpServletRequest request) {
 
-        //todo - validation owner + pet - id
+        Principal user = request.getUserPrincipal();
+        OwnerEntity ownerEntity = ownerService.validateOwner(ownerId);
 
-        List<TreatmentResponse> treatmentResponseList = treatmentMapper
-                .treatmentEntityListToTreatmentResponseList(findByCriteria(ownerId, petId, description.trim(), from, until));
+        if (!user.getName().equals(ownerEntity.getUsername())) {
+            throw new PetClinicException(HttpStatus.UNAUTHORIZED, ErrorReturnCode.UNAUTHORIZED);
+        }
 
-        ReportResponse reportResponse = new ReportResponse();
-        reportResponse.setTreatmentResponseList(treatmentResponseList);
-        reportResponse.setTotalCost(getReportTotalCost(treatmentResponseList));
-
-        return reportResponse;
+        if (petId != null) {
+            return getReportForOnePet(ownerEntity, petId, from, until);
+        } else {
+            return getReportForAllPets(ownerEntity, from, until);
+        }
     }
 
 
@@ -96,6 +104,50 @@ public class TreatmentService {
     }
 
     //HELPER METHODS
+    private ReportResponse getReportForAllPets(OwnerEntity ownerEntity, LocalDate from, LocalDate until) {
+        ReportResponse response = new ReportResponse();
+        List<PetEntity> petEntityList = petRepository.findPetEntitiesByOwner(ownerEntity);
+        List<TreatmentEntity> treatmentEntityList = new ArrayList<>();
+        for (PetEntity petEntity : petEntityList) {
+            List<TreatmentEntity> treatmentEntities;
+            if (from == null || until == null) {
+                treatmentEntities = treatmentRepository.findAllByPet(petEntity);
+            } else {
+                treatmentEntities = treatmentRepository.findAllByPetAndTreatmentDateBetween(petEntity, from, until);
+            }
+            treatmentEntityList.addAll(treatmentEntities);
+        }
+        List<TreatmentResponse> treatmentResponseList = treatmentMapper.treatmentEntityListToTreatmentResponseList(treatmentEntityList);
+        response.setTreatmentResponseList(treatmentResponseList);
+        response.setTotalCost(getReportTotalCost(treatmentResponseList));
+
+        return response;
+    }
+
+    private ReportResponse getReportForOnePet(OwnerEntity ownerEntity, Long petId, LocalDate from, LocalDate until) {
+        ReportResponse response = new ReportResponse();
+
+        Optional<PetEntity> petEntity = petRepository.findPetEntityByOwnerAndId(ownerEntity, petId);
+        if (petEntity.isEmpty()) {
+            throw new PetClinicException(HttpStatus.NOT_FOUND, ErrorReturnCode.PET_NOT_FOUND);
+        }
+
+        List<TreatmentResponse> treatmentResponseList;
+
+        if (from == null || until == null) {
+            treatmentResponseList = treatmentMapper.treatmentEntityListToTreatmentResponseList(treatmentRepository
+                    .findAllByPet(petEntity.get()));
+        } else {
+            treatmentResponseList = treatmentMapper
+                    .treatmentEntityListToTreatmentResponseList(treatmentRepository
+                            .findAllByPetAndTreatmentDateBetween(petEntity.get(), from, until));
+        }
+        response.setTreatmentResponseList(treatmentResponseList);
+        response.setTotalCost(getReportTotalCost(treatmentResponseList));
+
+        return response;
+    }
+
     private void validateRequest(TreatmentRequest request) {
         if (request.getDescription().isBlank()) {
             throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.DESCRIPTION_MISSING);
@@ -118,7 +170,7 @@ public class TreatmentService {
         return result;
     }
 
-    private List<TreatmentEntity> findByCriteria(Long ownerId, Long petId, String description, LocalDate from, LocalDate until) {
+    private List<TreatmentEntity> findByCriteria(String description, LocalDate from, LocalDate until) {
         return treatmentRepository.findAll((Specification<TreatmentEntity>) (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -128,16 +180,6 @@ public class TreatmentService {
 
             if (from != null && until != null) {
                 predicates.add(criteriaBuilder.between(root.get("treatmentDate"), from, until));
-            }
-
-            Join<TreatmentEntity, PetEntity> petEntityJoin = root.join("pet");
-            if (petId != null) {
-                predicates.add(criteriaBuilder.and(criteriaBuilder.equal(petEntityJoin.get("id"), petId)));
-            }
-
-            Join<PetEntity, OwnerEntity> ownerEntityJoin = petEntityJoin.join("owner");
-            if (ownerId != null) {
-                predicates.add(criteriaBuilder.and(criteriaBuilder.equal(ownerEntityJoin.get("id"), ownerId)));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

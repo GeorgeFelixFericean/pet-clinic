@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -54,7 +55,7 @@ public class OwnerController {
         return ResponseEntity.ok(ownerService.getOwnerById(ownerId));
     }
 
-    //UPDATE OWNER
+    //UPDATE OWNER (ADMIN)
     @RequestMapping(
             value = "/admin/owners/{ownerId}",
             produces = {"application/json;charset=utf-8"},
@@ -78,6 +79,30 @@ public class OwnerController {
 
         return ResponseEntity.ok(ownerService.updateOwner(name, address, phone, ownerId));
     }
+
+    //UPDATE OWNER - USERNAME AND PASSWORD (USER)
+    @RequestMapping(
+            value = "/user/owners/{ownerId}",
+            produces = {"application/json;charset=utf-8"},
+            method = RequestMethod.PUT)
+    public ResponseEntity<OwnerResponse> updateOwner(
+            @ApiParam(value = "The new username", required = true)
+            @Valid
+            @RequestParam(value = "username") String username
+            ,
+
+            @ApiParam(value = "The new password", required = true)
+            @Valid
+            @RequestParam(value = "password") String password
+            ,
+            @ApiParam(value = "The owner id", required = true)
+            @PathVariable("ownerId") Long ownerId
+            ,
+            HttpServletRequest request) {
+
+        return ResponseEntity.ok(ownerService.updateOwner(username, password, ownerId, request));
+    }
+
 
     //DELETE OWNER
     @RequestMapping(

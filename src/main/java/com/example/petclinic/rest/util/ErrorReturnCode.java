@@ -20,7 +20,10 @@ public enum ErrorReturnCode {
     PET_NOT_FOUND("40402", "Pet not found"),
     TREATMENT_NOT_FOUND("40403", "Treatment not found"),
 
-    USERNAME_ALREADY_EXISTS("40901", "A user with this username already exists");
+    UNAUTHORIZED("40100", "Unauthorized"),
+
+    USERNAME_ALREADY_EXISTS("40901", "A user with this username already exists"),
+    PHONE_ALREADY_EXISTS("40902", "A user with this phone already exists");
 
 
     private final String code;

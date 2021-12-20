@@ -163,7 +163,7 @@ public class PetService {
             }
             Join<PetEntity, OwnerEntity> ownerEntityJoin = root.join("owner");
             if (phone != null && !phone.isBlank()) {
-                predicates.add(criteriaBuilder.and(criteriaBuilder.equal(ownerEntityJoin.get("phone"), phone)));
+                predicates.add(criteriaBuilder.and(criteriaBuilder.like(ownerEntityJoin.get("phone"), "%" + phone + "%")));
             }
             Join<PetEntity, TreatmentEntity> treatmentEntityJoin = root.join("treatments", JoinType.LEFT);
             if (from != null && until != null) {

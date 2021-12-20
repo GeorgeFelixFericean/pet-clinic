@@ -13,4 +13,6 @@ import java.util.Optional;
 public interface OwnerRepository extends JpaRepository<OwnerEntity, Long>, JpaSpecificationExecutor<OwnerEntity> {
 
     Optional<OwnerEntity> findOwnerEntityByUsername(String username);
+
+    Optional<OwnerEntity> findOwnerEntityByPhone(String phone);
 }

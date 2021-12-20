@@ -10,19 +10,29 @@ import com.example.petclinic.rest.util.ErrorReturnCode;
 import org.mapstruct.factory.Mappers;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.criteria.Predicate;
+import javax.servlet.http.HttpServletRequest;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
 public class OwnerService {
+
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final OwnerRepository ownerRepository;
     OwnerMapper ownerMapper = Mappers.getMapper(OwnerMapper.class);
 
-    public OwnerService(OwnerRepository ownerRepository) {
+    public OwnerService(
+            BCryptPasswordEncoder bCryptPasswordEncoder,
+            OwnerRepository ownerRepository) {
+
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.ownerRepository = ownerRepository;
     }
 
@@ -32,6 +42,8 @@ public class OwnerService {
         validateRequest(request);
 
         OwnerEntity ownerEntity = ownerMapper.addOwnerRequestToOwnerEntity(request);
+        String encodedPassword = bCryptPasswordEncoder.encode("user");
+        ownerEntity.setPassword(encodedPassword);
         ownerRepository.save(ownerEntity);
         return ownerMapper.ownerEntityToOwnerResponse(ownerEntity);
     }
@@ -39,9 +51,7 @@ public class OwnerService {
     //GET OWNERS
     public List<OwnerResponse> getOwners(String name, String address, String phone) {
 
-        List<OwnerResponse> responseList = ownerMapper.ownerEntitiesToOwnerResponses(findByCriteria(name.trim(), address.trim(), phone.trim()));
-
-        return responseList;
+        return ownerMapper.ownerEntitiesToOwnerResponses(findByCriteria(name.trim(), address.trim(), phone.trim()));
     }
 
     //GET OWNER BY ID
@@ -56,15 +66,37 @@ public class OwnerService {
 
         OwnerEntity ownerEntity = validateOwner(ownerId);
 
+        Optional<OwnerEntity> optionalOwnerEntity = ownerRepository.findOwnerEntityByPhone(phone);
+        if (optionalOwnerEntity.isPresent() && !Objects.equals(ownerEntity.getId(), optionalOwnerEntity.get().getId())) {
+            throw new PetClinicException(HttpStatus.CONFLICT, ErrorReturnCode.PHONE_ALREADY_EXISTS);
+        }
+
         updateOwner(name, address, phone, ownerEntity);
 
         return ownerMapper.ownerEntityToOwnerResponse(ownerEntity);
     }
 
     //UPDATE OWNER - USERNAME AND PASSWORD (USER)
-//    public OwnerResponse updateOwner(String username, String password) {
-//
-//    }
+    public OwnerResponse updateOwner(String username, String password, Long ownerId, HttpServletRequest request) {
+
+        OwnerEntity ownerEntity = validateOwner(ownerId);
+
+        Principal user = request.getUserPrincipal();
+
+        if (!user.getName().equals(ownerEntity.getUsername())) {
+            throw new PetClinicException(HttpStatus.UNAUTHORIZED, ErrorReturnCode.UNAUTHORIZED);
+        }
+
+        Optional<OwnerEntity> optionalOwnerEntity = ownerRepository.findOwnerEntityByUsername(username);
+        if (optionalOwnerEntity.isPresent() && !Objects.equals(ownerEntity.getId(), optionalOwnerEntity.get().getId())) {
+            throw new PetClinicException(HttpStatus.CONFLICT, ErrorReturnCode.USERNAME_ALREADY_EXISTS);
+        }
+
+        updateOwner(username, password, ownerEntity);
+
+        return ownerMapper.ownerEntityToOwnerResponse(ownerEntity);
+    }
+
 
     //DELETE OWNER
     public OwnerResponse deleteOwner(Long ownerId) {
@@ -100,7 +132,20 @@ public class OwnerService {
             } else {
                 throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.INVALID_PHONE_NUMBER);
             }
+
         }
+        ownerRepository.save(ownerEntity);
+    }
+
+    private void updateOwner(String username, String password, OwnerEntity ownerEntity) {
+        if (!username.isBlank()) {
+            ownerEntity.setUsername(username.trim());
+        }
+        if (!password.isBlank()) {
+            String encodedPassword = bCryptPasswordEncoder.encode(password);
+            ownerEntity.setPassword(encodedPassword);
+        }
+
         ownerRepository.save(ownerEntity);
     }
 
@@ -140,32 +185,25 @@ public class OwnerService {
             throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.INVALID_PHONE_NUMBER);
         }
 
-        if (request.getUsername().isBlank()) {
-            throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.USERNAME_MISSING);
+        if (ownerRepository.findOwnerEntityByPhone(request.getPhone()).isPresent()) {
+            throw new PetClinicException(HttpStatus.CONFLICT, ErrorReturnCode.PHONE_ALREADY_EXISTS);
         }
 
-        if (request.getPassword().isBlank()) {
-            throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.PASSWORD_MISSING);
+        if (request.getUsername().isBlank()) {
+            throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.USERNAME_MISSING);
         }
 
         if (ownerRepository.findOwnerEntityByUsername(request.getUsername()).isPresent()) {
             throw new PetClinicException(HttpStatus.CONFLICT, ErrorReturnCode.USERNAME_ALREADY_EXISTS);
         }
 
-        if (request.getRole().isBlank()) {
+        if (request.getRole() == null) {
             throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.ROLE_MISSING);
         }
     }
 
     private boolean isValidPhoneNumber(String phone) {
-        // Traverse the string from
-        // start to end
         for (int i = 0; i < 10; i++) {
-
-            // Check if the sepecified
-            // character is a digit then
-            // return true,
-            // else return false
             if (!Character.isDigit(phone.charAt(i))) {
                 return false;
             }
