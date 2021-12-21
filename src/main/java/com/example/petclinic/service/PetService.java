@@ -2,6 +2,7 @@ package com.example.petclinic.service;
 
 import com.example.petclinic.exception.PetClinicException;
 import com.example.petclinic.mapping.PetMapper;
+import com.example.petclinic.model.CampaignResponse;
 import com.example.petclinic.model.PetResponse;
 import com.example.petclinic.persistence.entities.OwnerEntity;
 import com.example.petclinic.persistence.entities.PetEntity;
@@ -41,7 +42,7 @@ public class PetService {
     }
 
     //ADD PET
-    public PetResponse addPet(String name, String type, MultipartFile photo, Long ownerId) throws IOException {
+    public PetResponse addPet(String name, String type, MultipartFile photo, Long ownerId, String gender) throws IOException {
 
         validateRequest(name, type);
 
@@ -52,6 +53,7 @@ public class PetService {
         petEntity.setName(name.trim().toUpperCase());
         petEntity.setType(type.trim().toUpperCase());
         petEntity.setPhoto(photo.getBytes());
+        petEntity.setGender(gender.trim().toUpperCase());
         petRepository.save(petEntity);
 
         PetResponse petResponse = petMapper.petEntityToPetResponse(petEntity);
@@ -73,6 +75,16 @@ public class PetService {
         return responseList.stream()
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    //GET CAMPAIGN PETS
+    public CampaignResponse getCampaignPets() {
+
+//        List<Pet> pets = campaignService.searchAllParticipatingPets();
+//        pets.stream().forEach(pet -> pet.add(linkTo(methodOn(PetClinicController.class)
+//                .getPhoto(pet.getId()))
+//                .withRel("Photo")));
+        return null;
     }
 
     //GET PETS BY OWNER ID
@@ -184,4 +196,5 @@ public class PetService {
             throw new PetClinicException(HttpStatus.BAD_REQUEST, ErrorReturnCode.PET_TYPE_MISSING);
         }
     }
+
 }

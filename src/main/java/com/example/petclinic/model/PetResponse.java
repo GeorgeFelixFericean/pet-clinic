@@ -7,6 +7,7 @@ public class PetResponse extends RepresentationModel {
     private Long id;
     private String name;
     private String type;
+    private String gender;
 
 
     public Long getId() {
@@ -33,4 +34,11 @@ public class PetResponse extends RepresentationModel {
         this.type = type;
     }
 
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
 }

@@ -14,6 +14,7 @@ public enum ErrorReturnCode {
     USERNAME_MISSING("40010", "Username missing"),
     PASSWORD_MISSING("40011", "Password missing"),
     ROLE_MISSING("40012", "Role missing"),
+    INVALID_DATE("40013", "Invalid date"),
 
     NOT_FOUND("40400", "Not found"),
     OWNER_NOT_FOUND("40401", "Owner not found"),
@@ -23,7 +24,8 @@ public enum ErrorReturnCode {
     UNAUTHORIZED("40100", "Unauthorized"),
 
     USERNAME_ALREADY_EXISTS("40901", "A user with this username already exists"),
-    PHONE_ALREADY_EXISTS("40902", "A user with this phone already exists");
+    PHONE_ALREADY_EXISTS("40902", "A user with this phone already exists"),
+    CAMPAIGN_ALREADY_EXISTS("40903", "A campaign already exists for this month");
 
 
     private final String code;

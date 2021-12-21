@@ -14,6 +14,8 @@ public class PetEntity {
     private byte[] photo;
     private OwnerEntity owner;
     private List<TreatmentEntity> treatments = new ArrayList<>();
+    private String gender;
+    private CampaignEntity campaign;
 
 
     @Id
@@ -80,4 +82,23 @@ public class PetEntity {
         this.treatments = treatments;
     }
 
+    @Basic
+    @Column(name = "gender", nullable = false)
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    @ManyToOne
+    @JoinColumn(name = "campaign_id", referencedColumnName = "id")
+    public CampaignEntity getCampaign() {
+        return campaign;
+    }
+
+    public void setCampaign(CampaignEntity campaign) {
+        this.campaign = campaign;
+    }
 }

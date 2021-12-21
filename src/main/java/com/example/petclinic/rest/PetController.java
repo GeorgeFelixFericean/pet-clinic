@@ -1,5 +1,6 @@
 package com.example.petclinic.rest;
 
+import com.example.petclinic.model.CampaignResponse;
 import com.example.petclinic.model.PetResponse;
 import com.example.petclinic.service.PetService;
 import io.swagger.annotations.ApiParam;
@@ -44,9 +45,14 @@ public class PetController {
             @RequestParam(value = "photo") MultipartFile photo
             ,
             @ApiParam(value = "The owner id", required = true)
-            @PathVariable("ownerId") Long ownerId) throws IOException {
+            @PathVariable("ownerId") Long ownerId
+            ,
+            @ApiParam(value = "The pet gender", required = true)
+            @Valid
+            @RequestParam(value = "gender") String gender
+            ) throws IOException {
 
-        return ResponseEntity.ok(petService.addPet(name, type, photo, ownerId));
+        return ResponseEntity.ok(petService.addPet(name, type, photo, ownerId, gender));
     }
 
     //GET PETS
@@ -63,6 +69,14 @@ public class PetController {
                     LocalDate until) {
 
         return ResponseEntity.ok(petService.getPets(name, phone, from, until));
+    }
+
+    //PUBLIC
+    //GET ALL PETS FROM CAMPAIGN
+    @RequestMapping(value = "/public/campaign", method = RequestMethod.GET)
+    public ResponseEntity<CampaignResponse> getCampaignPets() {
+
+        return ResponseEntity.ok(petService.getCampaignPets());
     }
 
     //GET PETS BY OWNER ID
