@@ -5,9 +5,11 @@ import com.example.petclinic.mapping.TreatmentMapper;
 import com.example.petclinic.model.ReportResponse;
 import com.example.petclinic.model.TreatmentRequest;
 import com.example.petclinic.model.TreatmentResponse;
+import com.example.petclinic.persistence.entities.CampaignEntity;
 import com.example.petclinic.persistence.entities.OwnerEntity;
 import com.example.petclinic.persistence.entities.PetEntity;
 import com.example.petclinic.persistence.entities.TreatmentEntity;
+import com.example.petclinic.persistence.repository.CampaignRepository;
 import com.example.petclinic.persistence.repository.PetRepository;
 import com.example.petclinic.persistence.repository.TreatmentRepository;
 import com.example.petclinic.rest.util.ErrorReturnCode;
@@ -33,16 +35,19 @@ public class TreatmentService {
     private final PetService petService;
     private final OwnerService ownerService;
     private final PetRepository petRepository;
-
+    private final CampaignRepository campaignRepository;
 
     public TreatmentService(TreatmentRepository treatmentRepository,
                             PetService petService,
-                            OwnerService ownerService, PetRepository petRepository) {
+                            OwnerService ownerService,
+                            PetRepository petRepository,
+                            CampaignRepository campaignRepository) {
 
         this.treatmentRepository = treatmentRepository;
         this.petService = petService;
         this.ownerService = ownerService;
         this.petRepository = petRepository;
+        this.campaignRepository = campaignRepository;
     }
 
     //ADD TREATMENT
@@ -52,12 +57,18 @@ public class TreatmentService {
 
         validateRequest(request);
 
+        Optional<CampaignEntity> campaignEntity = campaignRepository
+                .findCampaignEntityByMonthAndYear(request.getTreatmentDate().getMonthValue(), request.getTreatmentDate().getYear());
+
+        campaignEntity.ifPresent(entity -> addPetToCampaign(petEntity, entity));
+
         TreatmentEntity treatmentEntity = treatmentMapper.treatmentRequestToTreatmentEntity(request);
         treatmentEntity.setPet(petEntity);
         treatmentRepository.save(treatmentEntity);
 
         return treatmentMapper.treatmentEntityToTreatmentResponse(treatmentEntity);
     }
+
 
     //GET TREATMENTS - ADMIN
     public List<TreatmentResponse> getTreatmentsAdmin(String description, LocalDate from, LocalDate until) {
@@ -104,6 +115,14 @@ public class TreatmentService {
     }
 
     //HELPER METHODS
+    private void addPetToCampaign(PetEntity petEntity, CampaignEntity campaignEntity) {
+        if (petEntity.getType().equals(campaignEntity.getPetType()) && petEntity.getGender().equals(campaignEntity.getPetGender())) {
+            petEntity.setCampaign(campaignEntity);
+            petRepository.save(petEntity);
+        }
+    }
+
+
     private ReportResponse getReportForAllPets(OwnerEntity ownerEntity, LocalDate from, LocalDate until) {
         ReportResponse response = new ReportResponse();
         List<PetEntity> petEntityList = petRepository.findPetEntitiesByOwner(ownerEntity);

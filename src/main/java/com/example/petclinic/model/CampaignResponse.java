@@ -1,7 +1,5 @@
 package com.example.petclinic.model;
 
-import java.util.List;
-
 public class CampaignResponse {
 
     String campaignName;

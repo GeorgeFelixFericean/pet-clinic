@@ -1,5 +1,6 @@
 package com.example.petclinic.mapping;
 
+import com.example.petclinic.model.PetCampaignResponse;
 import com.example.petclinic.model.PetResponse;
 import com.example.petclinic.persistence.entities.PetEntity;
 import org.mapstruct.Mapper;
@@ -12,5 +13,7 @@ public interface PetMapper {
     PetResponse petEntityToPetResponse(PetEntity petEntity);
 
     List<PetResponse> petResponseListFromPetEntityList(List<PetEntity> petEntityList);
+
+    List<PetCampaignResponse> petCampaignResponseFromPetEntityList(List<PetEntity> petEntityList);
 
 }
